@@ -1,0 +1,110 @@
+#!/bin/bash
+
+### Dependencies
+# fzf - command-line fuzzy finder
+# jq  - lightweight and flexible command-line JSON processor
+# npm - node package manager
+
+DEPENDENCIES=("fzf" "jq" "npm")
+
+### Check if dependencies are installed
+for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+  if ! command -v $DEPENDENCY &> /dev/null
+  then
+    echo ""$DEPENDENCY" could not be found."
+    DEPENDENCY_MISSING=true
+  fi
+done
+
+
+### If a dependency is missing, cancel script
+[ $DEPENDENCY_MISSING ] && exit 1
+
+### If package.json file is missing, cancel script
+if [ ! -f "package.json" ]; then
+  echo "package.json could not be found."
+  exit 1
+fi
+
+### Set up help text
+HELP_TEXT="
+lookup-package
+
+Look up installed packages with the power of \`fzf\` and makes them easily accessible with the power of the \'njt\' search engine.
+
+Usage:
+    lookup-package [OPTIONS] <QUERY>
+
+Options:
+    -h : Show help
+
+Query:
+    An optional query to immediately filter the package list.
+    This is passed to \`fzf\` as the initial query, and can be changed.
+"
+
+### Check arguments
+while getopts "h" FLAGS; do
+	case $FLAGS in
+		h) echo "$HELP_TEXT" && exit 0 ;;
+		*) exit 1 ;;
+	esac
+done
+
+shift $((OPTIND - 1))
+
+### Set up fzf header display
+FZF_HEADER="""
+enter:      package info on npmjs.com
+alt-space:  toggle preview window (shows 'npm view' of the selected package)
+
+alt + b:    package cost estimation on bundlephobia.com
+alt + g:    github (gitlab, etc.) repository root
+alt + h:    homepage (aliased as w for website or d for docs)
+alt + i:    issues
+alt + c:    changelog
+alt + n:    package info on npmjs.com
+alt + p:    pull requests (aliased as m for merge requests)
+alt + r:    list of github releases
+alt + s:    source (often same as repository root, but can be its subdirectory in case of a monorepo)
+alt + t:    list of git tags
+alt + u:    package contents preview on unpkg.com
+alt + v:    list of package versions with dates on npmjs.com
+alt + y:    package page on yarnpkg.com (mirror registry for npmjs.com)
+
+"""
+
+### Run
+COMMAND="open \"https://njt.now.sh/jump?from=cli&to=\""
+
+jq -r '.devDependencies, .dependencies | keys[]' package.json \
+	|
+fzf \
+	--ansi \
+	\
+	--bind="enter:execute:(${COMMAND}{}\%20n)" \
+	--bind="alt-space:toggle-preview" \
+	\
+	--bind="alt-b:execute:(${COMMAND}{}\%20b)" \
+  --bind="alt-g:execute:(${COMMAND}{}\%20g)" \
+  --bind="alt-h:execute:(${COMMAND}{}\%20h)" \
+  --bind="alt-i:execute:(${COMMAND}{}\%20i)" \
+  --bind="alt-c:execute:(${COMMAND}{}\%20c)" \
+  --bind="alt-n:execute:(${COMMAND}{}\%20n)" \
+  --bind="alt-p:execute:(${COMMAND}{}\%20p)" \
+  --bind="alt-r:execute:(${COMMAND}{}\%20r)" \
+  --bind="alt-s:execute:(${COMMAND}{}\%20s)" \
+  --bind="alt-t:execute:(${COMMAND}{}\%20t)" \
+  --bind="alt-u:execute:(${COMMAND}{}\%20u)" \
+  --bind="alt-v:execute:(${COMMAND}{}\%20v)" \
+  --bind="alt-y:execute:(${COMMAND}{}\%20y)" \
+	\
+	--header="${FZF_HEADER}" \
+	--info="inline" \
+	--no-multi \
+	--sort \
+	--preview-window="right:50%:hidden" \
+  --preview="npm view {}" \
+	--query "$*" \
+	--reverse \
+	;
