@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Overwrite the $SHELL env, because in fzf preview is used to execute the command with $SHELL -c COMMAND
+SHELL=bash
+
 ### Dependencies
 # fzf - command-line fuzzy finder
 # jq  - lightweight and flexible command-line JSON processor
@@ -74,6 +77,14 @@ alt + y:    package page on yarnpkg.com (mirror registry for npmjs.com)
 
 """
 
+show_infos() {
+  # URL encode the package name with jq
+  PACKAGE=$(echo $1 | jq -sRr @uri)
+  curl -s "https://api.npms.io/v2/package/$PACKAGE" | jq '.'
+}
+
+export -f show_infos
+
 ### Run
 COMMAND="open \"https://njt.now.sh/jump?from=cli&to=\""
 
@@ -104,7 +115,7 @@ fzf \
 	--no-multi \
 	--sort \
 	--preview-window="right:50%:hidden" \
-  --preview="npm view {}" \
+  --preview="show_infos {}" \
 	--query "$*" \
 	--reverse \
 	;
