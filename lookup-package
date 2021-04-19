@@ -9,9 +9,9 @@ DEPENDENCIES=("fzf" "jq" "npm")
 
 ### Check if dependencies are installed
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-  if ! command -v $DEPENDENCY &> /dev/null
+  if ! command -v "$DEPENDENCY" &> /dev/null
   then
-    echo ""$DEPENDENCY" could not be found."
+    echo "$DEPENDENCY could not be found."
     DEPENDENCY_MISSING=true
   fi
 done
@@ -30,7 +30,7 @@ fi
 HELP_TEXT="
 lookup-package
 
-Look up installed packages with the power of \`fzf\` and makes them easily accessible with the power of the \'njt\' search engine.
+Lists all installed npm packages in the current project and makes them easily searchable with the combination of 'fzf' and the search engine 'njt'.
 
 Usage:
     lookup-package [OPTIONS] <QUERY>
@@ -40,7 +40,7 @@ Options:
 
 Query:
     An optional query to immediately filter the package list.
-    This is passed to \`fzf\` as the initial query, and can be changed.
+    This is passed to 'fzf' as the initial query, and can be changed.
 "
 
 ### Check arguments
