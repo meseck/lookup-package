@@ -16,7 +16,6 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
   fi
 done
 
-
 ### If a dependency is missing, cancel script
 [ $DEPENDENCY_MISSING ] && exit 1
 
@@ -25,6 +24,9 @@ if [ ! -f "package.json" ]; then
   echo "package.json could not be found."
   exit 1
 fi
+
+### If package.json has no installed packages, cancel script
+grep -iq "dependencies" package.json || { echo "This project currently has no installed packages."; exit 1; }
 
 ### Set up help text
 HELP_TEXT="
@@ -77,7 +79,7 @@ alt + y:    package page on yarnpkg.com (mirror registry for npmjs.com)
 ### Run
 COMMAND="open \"https://njt.now.sh/jump?from=cli&to=\""
 
-jq -r '.devDependencies, .dependencies | keys[]' package.json \
+jq -r ".dependencies?, .devDependencies? | select(. != null) | keys[]" package.json \
 	|
 fzf \
 	--ansi \
